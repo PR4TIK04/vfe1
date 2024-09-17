@@ -11,37 +11,40 @@ const HostStream = () => {
   const videoRef = useRef();
   const peerRef = useRef();
 
+  // Function to get media stream with a specific camera direction
+  const getMediaStream = (facingMode = 'user') => {
+    return navigator.mediaDevices.getUserMedia({
+      video: { facingMode },
+      audio: true,
+    });
+  };
+
+  // Initialize host stream and peer connection
   useEffect(() => {
-    // Request access to video and audio
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: cameraFacing }, audio: true }).then((mediaStream) => {
+    getMediaStream(cameraFacing).then((mediaStream) => {
       setStream(mediaStream);
       videoRef.current.srcObject = mediaStream;
-    });
 
-    socket.on('viewer-request', (signal) => {
-      const peer = new Peer({
-        initiator: true,
-        trickle: false,
-        stream: stream,
+      socket.on('viewer-request', (signal) => {
+        const peer = new Peer({
+          initiator: true,
+          trickle: false,
+          stream: mediaStream,
+        });
+
+        peer.on('signal', (data) => {
+          socket.emit('host-response', { signal: data });
+        });
+
+        peerRef.current = peer;
+        peer.signal(signal);
       });
-
-      peer.on('signal', (data) => {
-        socket.emit('host-response', { signal: data });
-      });
-
-      peer.on('connect', () => {
-        console.log('Peer connected');
-      });
-
-      peerRef.current = peer;
-
-      peer.signal(signal);
     });
 
     return () => {
       socket.off('viewer-request');
     };
-  }, [stream, cameraFacing]);
+  }, [cameraFacing]);
 
   // Toggle audio
   const toggleAudio = () => {
@@ -51,7 +54,19 @@ const HostStream = () => {
 
   // Switch camera
   const switchCamera = () => {
-    setCameraFacing((prev) => (prev === 'user' ? 'environment' : 'user'));
+    const newFacingMode = cameraFacing === 'user' ? 'environment' : 'user';
+    setCameraFacing(newFacingMode);
+
+    // Get the new camera stream
+    getMediaStream(newFacingMode).then((newStream) => {
+      const videoTrack = newStream.getVideoTracks()[0];
+      const audioTrack = stream.getAudioTracks()[0];
+      
+      // Replace the current stream with the new stream
+      peerRef.current.replaceTrack(stream.getVideoTracks()[0], videoTrack, stream);
+      setStream(new MediaStream([videoTrack, audioTrack]));
+      videoRef.current.srcObject = newStream;
+    });
   };
 
   return (
