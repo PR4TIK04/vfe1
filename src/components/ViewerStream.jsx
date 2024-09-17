@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import Peer from 'simple-peer';
 
-const socket = io('https://your-backend-url'); // Replace with your backend URL
+const socket = io('https://video-be.vercel.app'); // Replace with your backend URL
 
 const ViewerStream = () => {
   const videoRef = useRef();
