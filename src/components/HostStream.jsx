@@ -2,21 +2,23 @@ import React, { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 import Peer from 'simple-peer';
 
-const socket = io('https://video-be.vercel.app'); // Replace with the URL of your backend
+const socket = io('https://video-be.vercel.app'); // Replace with your backend URL
 
 const HostStream = () => {
   const [stream, setStream] = useState(null);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [cameraFacing, setCameraFacing] = useState('user');
   const videoRef = useRef();
   const peerRef = useRef();
 
   useEffect(() => {
-    // Capture the host's video stream
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((mediaStream) => {
+    // Request access to video and audio
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: cameraFacing }, audio: true }).then((mediaStream) => {
       setStream(mediaStream);
       videoRef.current.srcObject = mediaStream;
     });
 
-    socket.on('viewer-request', ({ signal }) => {
+    socket.on('viewer-request', (signal) => {
       const peer = new Peer({
         initiator: true,
         trickle: false,
@@ -33,19 +35,38 @@ const HostStream = () => {
 
       peerRef.current = peer;
 
-      // Signal handling
       peer.signal(signal);
     });
 
     return () => {
       socket.off('viewer-request');
     };
-  }, [stream]);
+  }, [stream, cameraFacing]);
+
+  // Toggle audio
+  const toggleAudio = () => {
+    stream.getAudioTracks()[0].enabled = !audioEnabled;
+    setAudioEnabled(!audioEnabled);
+  };
+
+  // Switch camera
+  const switchCamera = () => {
+    setCameraFacing((prev) => (prev === 'user' ? 'environment' : 'user'));
+  };
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col items-center">
       <h2 className="text-2xl font-semibold">Host Stream</h2>
       <video ref={videoRef} autoPlay muted className="w-full h-auto mt-4" />
+
+      <div className="flex gap-4 mt-4">
+        <button className="bg-gray-800 text-white px-4 py-2 rounded" onClick={toggleAudio}>
+          {audioEnabled ? 'Mute' : 'Unmute'}
+        </button>
+        <button className="bg-gray-800 text-white px-4 py-2 rounded" onClick={switchCamera}>
+          Switch Camera
+        </button>
+      </div>
     </div>
   );
 };
