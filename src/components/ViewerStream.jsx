@@ -1,12 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import Peer from 'simple-peer';
 
-const socket = io('https://video-be.vercel.app'); // Replace with your backend URL
+const socket = io('https://your-backend-url'); // Replace with your backend URL
 
 const ViewerStream = () => {
   const videoRef = useRef();
-  const [peer, setPeer] = useState(null);
 
   useEffect(() => {
     const peer = new Peer({
@@ -18,14 +17,12 @@ const ViewerStream = () => {
       videoRef.current.srcObject = stream;
     });
 
-    // Signal the host to start the connection
+    // Request the stream from the host
     socket.emit('viewer-request', { signal: peer.signal });
 
-    socket.on('host-response', ({ signal }) => {
+    socket.on('host-response', (signal) => {
       peer.signal(signal);
     });
-
-    setPeer(peer);
 
     return () => {
       peer.destroy();
@@ -34,7 +31,7 @@ const ViewerStream = () => {
   }, []);
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col items-center">
       <h2 className="text-2xl font-semibold">Viewer Stream</h2>
       <video ref={videoRef} autoPlay className="w-full h-auto mt-4" />
     </div>
