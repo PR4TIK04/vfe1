@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 import Peer from 'simple-peer';
-const socket = io('http://localhost:5000'); // Change if your backend is hosted
+const socket = io('https://video-be.vercel.app/'); // Change if your backend is hosted
 
 const VideoStream = () => {
   const [stream, setStream] = useState(null);
