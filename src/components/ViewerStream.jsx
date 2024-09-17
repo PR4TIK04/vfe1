@@ -13,15 +13,15 @@ const ViewerStream = () => {
       trickle: false,
     });
 
-    // Listen for the host stream and display it
+    peer.on('signal', (signal) => {
+      socket.emit('viewer-request', signal);
+    });
+
     peer.on('stream', (stream) => {
       videoRef.current.srcObject = stream;
     });
 
-    // Request the host stream
-    socket.emit('viewer-request');
-
-    // Receive signal from host
+    // Get host's response signal
     socket.on('host-response', (signal) => {
       peer.signal(signal);
     });
@@ -41,3 +41,4 @@ const ViewerStream = () => {
 };
 
 export default ViewerStream;
+
