@@ -6,12 +6,11 @@ const socket = io('https://video-be.vercel.app'); // Replace with your backend U
 
 const HostStream = () => {
   const [stream, setStream] = useState(null);
-  const [audioEnabled, setAudioEnabled] = useState(true);
   const [cameraFacing, setCameraFacing] = useState('user');
   const videoRef = useRef();
   const peerRef = useRef();
 
-  // Function to get media stream with a specific camera direction
+  // Function to get media stream based on the camera direction
   const getMediaStream = (facingMode = 'user') => {
     return navigator.mediaDevices.getUserMedia({
       video: { facingMode },
@@ -25,6 +24,7 @@ const HostStream = () => {
       setStream(mediaStream);
       videoRef.current.srcObject = mediaStream;
 
+      // Wait for viewer connection request
       socket.on('viewer-request', (signal) => {
         const peer = new Peer({
           initiator: true,
@@ -46,25 +46,15 @@ const HostStream = () => {
     };
   }, [cameraFacing]);
 
-  // Toggle audio
-  const toggleAudio = () => {
-    stream.getAudioTracks()[0].enabled = !audioEnabled;
-    setAudioEnabled(!audioEnabled);
-  };
-
-  // Switch camera
+  // Switch the camera (front/rear)
   const switchCamera = () => {
     const newFacingMode = cameraFacing === 'user' ? 'environment' : 'user';
     setCameraFacing(newFacingMode);
 
-    // Get the new camera stream
     getMediaStream(newFacingMode).then((newStream) => {
       const videoTrack = newStream.getVideoTracks()[0];
-      const audioTrack = stream.getAudioTracks()[0];
-      
-      // Replace the current stream with the new stream
       peerRef.current.replaceTrack(stream.getVideoTracks()[0], videoTrack, stream);
-      setStream(new MediaStream([videoTrack, audioTrack]));
+      setStream(newStream);
       videoRef.current.srcObject = newStream;
     });
   };
@@ -75,9 +65,6 @@ const HostStream = () => {
       <video ref={videoRef} autoPlay muted className="w-full h-auto mt-4" />
 
       <div className="flex gap-4 mt-4">
-        <button className="bg-gray-800 text-white px-4 py-2 rounded" onClick={toggleAudio}>
-          {audioEnabled ? 'Mute' : 'Unmute'}
-        </button>
         <button className="bg-gray-800 text-white px-4 py-2 rounded" onClick={switchCamera}>
           Switch Camera
         </button>
@@ -87,3 +74,4 @@ const HostStream = () => {
 };
 
 export default HostStream;
+
