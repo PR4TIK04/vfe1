@@ -146,7 +146,7 @@ const HostStream = () => {
           ref={canvasRef}
           style={{
             position: 'absolute',
-            top: '24vh',
+            top: '10vh',
             left: 0,
             height: 'auto',
             pointerEvents: 'none' // Ensures the canvas does not interfere with video controls
