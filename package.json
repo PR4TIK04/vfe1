@@ -13,6 +13,8 @@
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@heroicons/react": "^1.0.6",
+    "@tensorflow-models/coco-ssd": "^2.2.3",
+    "@tensorflow/tfjs": "^4.21.0",
     "global": "^4.4.0",
     "process": "^0.11.10",
     "react": "^18.3.1",
